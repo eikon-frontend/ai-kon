@@ -1,28 +1,41 @@
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext, load_index_from_storage
-from llama_index.core import PromptTemplate, Settings
-from llama_index.llms.openai import OpenAI
-import os
-import streamlit as st
-import random
+# Importation des modules nécessaires
+# Ces modules sont des "boîtes à outils" qui permettent d'ajouter des fonctionnalités à Python
+from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext, load_index_from_storage  # Pour gérer les documents et l'indexation
+from llama_index.core import PromptTemplate, Settings  # Pour créer des modèles de questions/réponses et configurer le système
+from llama_index.llms.openai import OpenAI  # Pour utiliser l'intelligence artificielle d'OpenAI
+import os  # Pour interagir avec le système de fichiers (dossiers, fichiers, etc.)
+import streamlit as st  # Pour créer une interface web simple
+import random  # Pour générer des nombres aléatoires (ici, pour l'exemple)
 
 # ---------------------------------------
 # CONFIGURATION et INSTALLATION
 # ---------------------------------------
 
-# Installer llama-index : pip install llama-index
-# Installer streamlit : pip install streamlit
-# Placez la clé OpenAI dans une variable d'environnement nommée OPENAI_API_KEY :
-# - "export OPENAI_API_KEY=XXXXX" sur linux et macOS, "set OPENAI_API_KEY=XXXXX" sur Windows
-# lancez le script avec : streamlit run app.py
+# Avant d'utiliser ce script, il faut installer les bibliothèques nécessaires :
+# - Pour installer llama-index, tapez dans le terminal : pip install llama-index
+# - Pour installer streamlit, tapez dans le terminal : pip install streamlit
+#
+# Pour utiliser l'intelligence artificielle d'OpenAI, il faut une clé API (une sorte de mot de passe) :
+# - Créez un compte sur https://platform.openai.com/api-keys et copiez votre clé
+# - Sur Mac ou Linux, tapez dans le terminal : export OPENAI_API_KEY=VOTRE_CLÉ
+# - Sur Windows, tapez : set OPENAI_API_KEY=VOTRE_CLÉ
+#
+# Pour lancer l'application, tapez dans le terminal : streamlit run app.py
 
+# Chemin du dossier où sont stockés les documents à analyser
 DATA_DIR = "./data"
+# Chemin du dossier où sera sauvegardé l'index (la "mémoire" de l'IA)
 INDEX_DIR = "./storage"
+# Nom du modèle d'intelligence artificielle à utiliser (ici, un modèle OpenAI)
 LLM_MODEL_NAME = "gpt-4o-mini"
 
+# On crée une instance du modèle d'OpenAI avec le nom choisi
 llm = OpenAI(model = LLM_MODEL_NAME)
+# On indique à llama-index d'utiliser ce modèle par défaut
 Settings.llm = llm
 
-@st.cache_data
+# Cette fonction permet de charger ou de créer l'index des documents
+@st.cache_data  # Cette ligne permet de ne pas refaire le travail si rien n'a changé (gain de temps)
 def load_index():
     """
     Charge ou crée un index à partir des documents du répertoire spécifié.
@@ -31,21 +44,26 @@ def load_index():
     crée un nouvel index et le sauvegarde. Si le dossier d'index existe, il charge
     l'index depuis le stockage directement.
     """
+    # Si le dossier d'index n'existe pas, on lit les documents et on crée l'index
     if not os.path.exists(INDEX_DIR):
-        documents = SimpleDirectoryReader(DATA_DIR).load_data()
-        index = VectorStoreIndex.from_documents(documents)
-        index.storage_context.persist(persist_dir=INDEX_DIR)
+        documents = SimpleDirectoryReader(DATA_DIR).load_data()  # On lit tous les fichiers du dossier data
+        index = VectorStoreIndex.from_documents(documents)  # On crée l'index à partir des documents
+        index.storage_context.persist(persist_dir=INDEX_DIR)  # On sauvegarde l'index dans le dossier storage
     else:
+        # Si l'index existe déjà, on le charge pour ne pas tout refaire
         storage_context = StorageContext.from_defaults(persist_dir=INDEX_DIR)
         index = load_index_from_storage(storage_context)
-    return index
+    return index  # On retourne l'index (la "mémoire" de l'IA)
 
+# On charge l'index au démarrage de l'application
 index = load_index()
 
+# Cette fonction prépare le modèle de question/réponse (le "prompt")
 def prepare_template():
     """
     Prépare un template de prompt pour le système de questions/réponses.
     """
+    # Le texte ci-dessous sert de consigne à l'IA pour répondre comme on le souhaite
     text_qa_template_str = """
     Tu es AI-kon, un expert en interactive media design et tu es à eikon, une école professionnelle d'arts appliqués à Fribourg, en Suisse. Tu connais tout sur l'école, son règlement et son fonctionnement, ainsi que sur les métiers de la création numérique.
     Tu réponds aux questions des élèves, en les tutoyant.
@@ -57,13 +75,13 @@ def prepare_template():
     À partir de ces connaissances, et uniquement à partir d’elles, réponds en français à la question.
     Réponds en faisant des allégories et des métaphores alambiquées, comme si tu étais un·e poète·esse du 19ème siècle.
     """
-    # Blague finale :
+    # On pourrait ajouter une blague à la fin de la réponse (optionnel)
     # if random.random() < 0.5:
     #     text_qa_template_str += "Termine par une blague geek."
-    qa_template = PromptTemplate(text_qa_template_str)
-    return qa_template
+    qa_template = PromptTemplate(text_qa_template_str)  # On crée le template
+    return qa_template  # On retourne le template
 
-
+# On affiche un titre et une description sur la page web
 st.markdown("""
 # AI-kon
 
@@ -71,35 +89,41 @@ AI-kon est un assistant virtuel qui répond aux questions des élèves d'eikon. 
 """
 )
 
-# Initialise les messages de session_state s'ils ne sont pas déjà présents
+# On vérifie si la liste des messages existe déjà dans la session (pour garder l'historique du chat)
 if "messages" not in st.session_state:
+    # Si ce n'est pas le cas, on l'initialise avec un message d'accueil de l'assistant
     st.session_state.messages = [{"role": "assistant", "content": "Pose tes questions sur l'école, je suis là pour t'aider !"}]
 
-# Capture l'entrée utilisateur et l'ajoute aux messages de session_state
+# On récupère la question de l'utilisateur (si elle existe) et on l'ajoute à la liste des messages
 if prompt := st.chat_input("Que veux-tu savoir ?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-# assistant_avatar_filepath = "media/avatar.png"
+# On définit les avatars (icônes) pour l'assistant et l'utilisateur
 assistant_avatar_filepath = "🤖"
 user_avatar_filepath = "🙂"
-# Affiche les messages du chat avec les avatars appropriés
+# On affiche tous les messages du chat avec l'avatar correspondant
 for message in st.session_state.messages:
     with st.chat_message(message["role"], avatar=assistant_avatar_filepath if message["role"] == "assistant" else user_avatar_filepath):
         st.write(message["content"])
 
-
+# On prépare le template de question/réponse
 qa_template = prepare_template()
+# On crée un "moteur de recherche" qui va utiliser l'index et le template pour répondre
 query_engine = index.as_query_engine(text_qa_template=qa_template, similarity_top_k=2)
 
+# Si le dernier message vient de l'utilisateur, l'assistant doit répondre
 if st.session_state.messages[-1]["role"] == "user":
+    # On affiche le message de l'assistant avec l'avatar
     with st.chat_message("assistant", avatar=assistant_avatar_filepath):
+        # On affiche un message d'attente pendant que l'IA réfléchit
         with st.spinner("Patientez deux secondes le temps que AI-kon se réveille"):
-            response = query_engine.query(prompt)
+            response = query_engine.query(prompt)  # L'IA génère une réponse à la question
         if response:
-            st.markdown(response.response)
+            st.markdown(response.response)  # On affiche la réponse sur la page web
+            # On ajoute la réponse à l'historique des messages
             st.session_state.messages.append({"role": "assistant", "content": response.response})
 
-            # pour afficher le contenu utilisé pour générer la réponse :
+            # Pour voir le texte utilisé par l'IA pour répondre (optionnel, pour les curieux) :
             #for node in response.source_nodes:
             #    print("\n----------------")
             #    print(f"Texte utilisé pour répondre : {node.text}")

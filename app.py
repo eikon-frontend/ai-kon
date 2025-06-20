@@ -60,7 +60,6 @@ def prepare_template():
     --------
     {context_str}
     --------
-    Détecte la langue de la question posée par l'élève et répond dans cette langue. Voici les règles à suivre pour répondre :
     À partir de ces connaissances, et uniquement à partir d'elles. Ne réponds pas à la question si tu n'as pas d'informations pertinentes. Si tu ne sais pas, dis que tu ne sais pas.
     Réponds de manière concise et précise, sans faire de blabla inutile. Sois amical·e et engageant·e, mais reste professionnel·le. Utilise un langage simple et clair, sans jargon technique.
     """

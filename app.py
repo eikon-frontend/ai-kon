@@ -3,9 +3,9 @@
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext, load_index_from_storage  # Pour gérer les documents et l'indexation
 from llama_index.core import PromptTemplate, Settings  # Pour créer des modèles de questions/réponses et configurer le système
 from llama_index.llms.openai import OpenAI  # Pour utiliser l'intelligence artificielle d'OpenAI
+from llama_index.embeddings.openai import OpenAIEmbedding  # Pour utiliser les embeddings d'OpenAI
 import os  # Pour interagir avec le système de fichiers (dossiers, fichiers, etc.)
 import streamlit as st  # Pour créer une interface web simple
-import random  # Pour générer des nombres aléatoires (ici, pour l'exemple)
 
 # ---------------------------------------
 # CONFIGURATION et INSTALLATION
@@ -26,13 +26,27 @@ import random  # Pour générer des nombres aléatoires (ici, pour l'exemple)
 DATA_DIR = "./data"
 # Chemin du dossier où sera sauvegardé l'index (la "mémoire" de l'IA)
 INDEX_DIR = "./storage"
+
+# Vérification de la clé API OpenAI
+if not os.getenv("OPENAI_API_KEY"):
+    st.error("⚠️ Clé API OpenAI manquante ! Veuillez définir la variable d'environnement OPENAI_API_KEY")
+    st.stop()
+
+# === INITIALISATION DU MODÈLE LLM ===
 # Nom du modèle d'intelligence artificielle à utiliser (ici, un modèle OpenAI)
+# disponibles pour ce projet: gpt-4.1-nano / gpt-4o-mini
 LLM_MODEL_NAME = "gpt-4o-mini"
 
+
 # On crée une instance du modèle d'OpenAI avec le nom choisi
-llm = OpenAI(model = LLM_MODEL_NAME)
+llm = OpenAI(model = LLM_MODEL_NAME, temperature=0.01) # 0 = très précis, peu créatif // 1 = pas fiable du tout, très créatif
 # On indique à llama-index d'utiliser ce modèle par défaut
 Settings.llm = llm
+
+# modèle de représentation de texte
+# disponibles pour ce projet: text-embedding-3-small
+embed_model = OpenAIEmbedding(model="text-embedding-3-small")
+Settings.embed_model = embed_model
 
 # Cette fonction permet de charger ou de créer l'index des documents
 @st.cache_data  # Cette ligne permet de ne pas refaire le travail si rien n'a changé (gain de temps)
@@ -72,13 +86,15 @@ def prepare_template():
     --------
     {context_str}
     --------
-    À partir de ces connaissances, et uniquement à partir d’elles, réponds en français à la question.
-    Réponds en faisant des allégories et des métaphores alambiquées, comme si tu étais un·e poète·esse du 19ème siècle.
+    Détecte la langue de la question posée par l'élève et répond dans cette langue. Voici les règles à suivre pour répondre :
+    À partir de ces connaissances, et uniquement à partir d'elles. Ne réponds pas à la question si tu n'as pas d'informations pertinentes. Si tu ne sais pas, dis que tu ne sais pas.
+    Réponds de manière concise et précise, sans faire de blabla inutile. Sois amical·e et engageant·e, mais reste professionnel·le. Utilise un langage simple et clair, sans jargon technique.
     """
+    # Ne réponds pas si la question porte sur un sujet qui est en dehors des connaissances de l'école.
     # On pourrait ajouter une blague à la fin de la réponse (optionnel)
     # if random.random() < 0.5:
     #     text_qa_template_str += "Termine par une blague geek."
-    qa_template = PromptTemplate(text_qa_template_str)  # On crée le template
+    qa_template = PromptTemplate(text_qa_template_str) # On crée le template
     return qa_template  # On retourne le template
 
 # On affiche un titre et une description sur la page web
@@ -123,8 +139,12 @@ if st.session_state.messages[-1]["role"] == "user":
             # On ajoute la réponse à l'historique des messages
             st.session_state.messages.append({"role": "assistant", "content": response.response})
 
-            # Pour voir le texte utilisé par l'IA pour répondre (optionnel, pour les curieux) :
-            #for node in response.source_nodes:
-            #    print("\n----------------")
-            #    print(f"Texte utilisé pour répondre : {node.text}")
+        # Pour voir le texte utilisé par l'IA pour répondre (optionnel, pour les curieux) :
+        if hasattr(response, "source_nodes"):
+            with st.expander("📚 Sources utilisées"):
+                for node in response.source_nodes:
+                    st.markdown(f"- **Document**: {node.metadata.get('file_name', 'inconnu')}")
+                    st.markdown(f"  > {node.node.get_text()[:200]}...")
+
+            
 

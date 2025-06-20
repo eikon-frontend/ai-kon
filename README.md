@@ -12,3 +12,8 @@ Requirements :
 - pip install llama-index
 - pip install streamlit
 
+## Commande pour lancer l’application :
+
+```bash
+streamlit run app.py
+```

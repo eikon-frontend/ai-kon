@@ -1,16 +1,14 @@
-# Code pour Gourou Fabulus, le chatbot numéro 1 sur la psycho évo en France
+# AI-kon
 
 Code utilisant llamaindex et streamlit pour créer un chatbot permettant d’interroger des documents (application RAG).
 
-Voir la version en ligne de ce chatbot : [https://homofabulus.com/gourou](https://homofabulus.com/gourou)
+## Inspiration
 
-Voir la vidéo expliquant ce code : [https://www.youtube.com/watch?v=tlqjd9TTHXE](https://www.youtube.com/watch?v=tlqjd9TTHXE)
+Ce code s'inspire de la vidéo de [Homo Fabulus](https://www.youtube.com/watch?v=tlqjd9TTHXE) sur YouTube, qui montre comment créer un chatbot avec LlamaIndex et Streamlit.
 
-Requirements :
+## Installation
 
-- clé API OpenAI à récupérer sur [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) (voir app.py pour comment l’installer)
-- pip install llama-index
-- pip install streamlit
+Les étapes d'installation sont dans le document fourni en annexe lors du workshop.
 
 ## Commande pour lancer l’application :
 

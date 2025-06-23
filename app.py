@@ -79,7 +79,7 @@ if "messages" not in st.session_state:
 if prompt := st.chat_input("Que veux-tu savoir ?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-assistant_avatar_filepath = "🤖"
+assistant_avatar_filepath = "media/assistant_avatar.png"  
 user_avatar_filepath = "🙂"
 for message in st.session_state.messages:
     with st.chat_message(message["role"], avatar=assistant_avatar_filepath if message["role"] == "assistant" else user_avatar_filepath):

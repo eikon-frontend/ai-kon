@@ -5,6 +5,7 @@ Code utilisant llamaindex et streamlit pour créer un chatbot permettant d’int
 ## Inspiration
 
 Ce code s'inspire de la vidéo de [Homo Fabulus](https://www.youtube.com/watch?v=tlqjd9TTHXE) sur YouTube, qui montre comment créer un chatbot avec LlamaIndex et Streamlit.
+Le code reprend les bases posées dans le repo [GourouFabulous](https://github.com/stephanedebove/gouroufabulus).
 
 ## Installation
 

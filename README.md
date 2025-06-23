@@ -10,7 +10,13 @@ Ce code s'inspire de la vidéo de [Homo Fabulus](https://www.youtube.com/watch?v
 
 Les étapes d'installation sont dans le document fourni en annexe lors du workshop.
 
-## Commande pour lancer l’application :
+## Commande pour lancer l'application :
+
+Configurer la clé d'API OpenAI (remplacer "your_openai_api_key" par la clé d'API donnée sur Teams)
+
+```bash
+export OPENAI_API_KEY="your_openai_api_key"
+```
 
 ```bash
 streamlit run app.py
